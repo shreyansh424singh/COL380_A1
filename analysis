@@ -47,7 +47,7 @@ Just added -O3 flag.
 Time: 31415 microseconds
 Speedup: .... times
 
-MAkefile:
+Makefile:
 	g++ -O3 -c main.cpp -o main.o
 	g++ main.o library1.so -o a.out -Wl,-rpath=.
 	./a.out 
@@ -59,13 +59,57 @@ MAkefile:
 This is giving frequent stack overflow.
 
 
+Used omp parallel (statis scheduling, dynamic is giving segmentation fault frequently)
+(adding list of private variables is important else it will give errors)
+
+Time: 10928 microseconds
+
+	************************************code*********************************
+	
+	// #pragma omp parallel for private(i,j,k,t,q,w,temp,flag,c) shared(m_input, ans_matrix, in_matrix, compress_ans_matrix)   // a lot variation in time avg~23000 ms 
+    #pragma omp parallel for schedule(static) num_threads(4) private(i,j,k,t,q,w,temp,flag,c)          //gives time around 10000 ms
+        for(i=0; i<n; i++){
+            for(j=0; j<n; j++){
+                t = 0;
+                for(k=0; k<n; k++){
+                    // // this when mapping of blocks with i>j is not done
+                    // if(m_input[{min(i/m, k/m), max(i/m, k/m)}]==0 or m_input[{min(k/m, j/m), max(k/m, j/m)}]==0) continue;
+                    // // when mapping of blocks with i>j is done
+                    if(m_input[{i/m, k/m}]==0 or m_input[{k/m, j/m}]==0) continue;
+                    if(i/m <= k/m) q = in_matrix[m_input[{i/m, k/m}]-1][m*(i%m)+k%m];
+                    else q = in_matrix[m_input[{k/m, i/m}]-1][m*(k%m)+i%m];
+                    if(k/m <= j/m) w = in_matrix[m_input[{k/m, j/m}]-1][m*(k%m)+j%m];
+                    else w = in_matrix[m_input[{j/m, k/m}]-1][m*(j%m)+k%m];
+                    t = Outer(t, Inner(q, w));
+                    t = (t > MAX_VAL - 1) ? MAX_VAL - 1 : t;
+                }
+                ans_matrix[i][j] = t;
+            }
+        }
+
+        for(i=0; i<n/m; i++){
+            for(j=i; j<n/m; j++){
+                flag=false;
+                for(k=0; k<m*m; k++){
+                    if(ans_matrix[i*m+k/m][j*m+k%m]>0)  flag=true;
+                    temp[k] = ans_matrix[i*m+k/m][j*m+k%m];
+                }
+                if(flag){
+                    m_ans[{i, j}] = c++;
+                    compress_ans_matrix.push_back(temp);
+                }
+            }
+        }
+	************************************code*********************************
+
+Makefile:
+	export OMP_NUM_THREADS=4
+	g++ -fopenmp -O2 -c main.cpp -o main.o
+	g++ -fopenmp main.o library1.so -o a.out -Wl,-rpath=.
+	./a.out 
 
 
-
-
-
-
-
+######################################## FOURTH ############################################    		
 
 
 

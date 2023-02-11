@@ -2,6 +2,7 @@
 // #include <iostream>
 // #include <fstream>
 #include "library.hpp"
+#include <omp.h>
 
 using namespace std;
 
@@ -68,7 +69,8 @@ void matrix_ope(){
 
     int i, j, k, t, q, w, c=1;
 
-    #pragma omp parallel for private(i,j,k,t,q,w,temp,flag,c) shared(m_input, ans_matrix, in_matrix, compress_ans_matrix)
+    // #pragma omp parallel for private(i,j,k,t,q,w,temp,flag,c) shared(m_input, ans_matrix, in_matrix, compress_ans_matrix)   // a lot variation in time avg~23000 ms 
+    #pragma omp parallel for schedule(static) num_threads(4) private(i,j,k,t,q,w,temp,flag,c)          //gives time around 10000 ms
         for(i=0; i<n; i++){
             for(j=0; j<n; j++){
                 t = 0;
@@ -88,7 +90,6 @@ void matrix_ope(){
             }
         }
 
-        // #pragma omp parallel for private(i,j,k,temp,flag,c) shared(compress_ans_matrix, ans_matrix)
         for(i=0; i<n/m; i++){
             for(j=i; j<n/m; j++){
                 flag=false;
