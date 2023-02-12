@@ -1,0 +1,140 @@
+######################################## FIRST ############################################
+1st: Modified Multiplication O(k^2.m^2)
+	Time: 105576 microseconds
+	
+	************************************code*********************************
+	int i, j, k, l, t, q, w, c=1, fi, si, fj, sj, xi, yi, xj, yj;
+
+        for(i=1; i<=k_input; i++){
+            for(j=1; j<=k_input; j++){
+                fi = rm_input[i].first, si = rm_input[i].second;
+                fj = rm_input[j].first, sj = rm_input[j].second;
+                for(k=0; k<m*m; k++){
+                    for(l=0; l<m*m; l++){  //directly calculating compress ans matrix is also possible
+                        // cout<<fi<<" "<<si<<" "<<fj<<" "<<sj<<" m "<<m<<endl;
+                        // cout<<xi<<" "<<yi<<" "<<xj<<" "<<yj<<endl;
+                        // cout<<i<<" i "<<j<<" j "<<k<<" k "<<l<<" l\n";
+                        xi = fi*m + k/m, yi = si*m + k%m;
+                        xj = fj*m + l/m, yj = sj*m + l%m;
+                        t = Inner(in_matrix[i-1][k], in_matrix[j-1][l]);
+                        if(xj==yi) ans_matrix[xi][yj] = Outer(ans_matrix[xi][yj], t);
+                        if(xi==yj) ans_matrix[xj][yi] = Outer(ans_matrix[xj][yi], t);
+                        if(fi!=si){
+                            if(xi==yi) ans_matrix[yi][yj] = Outer(ans_matrix[yi][yj], t);
+                            if(yi==yj) ans_matrix[xj][xi] = Outer(ans_matrix[xj][xi], t);
+                        }
+                        if(fj!=sj){
+                            if(yj==yi) ans_matrix[xi][xj] = Outer(ans_matrix[xi][xj], t);
+                            if(xi==xj) ans_matrix[yj][yi] = Outer(ans_matrix[yj][yi], t);
+                        }
+                        if(fi!=si and fj!=sj){
+                            if(xi==yj) ans_matrix[yi][xj] = Outer(ans_matrix[yi][xj], t);
+                            if(xj==yi) ans_matrix[yj][xi] = Outer(ans_matrix[yj][xi], t);
+                        }
+                    }
+                }
+            }
+        }
+        
+        for(i=0; i<n/m; i++){
+            for(j=i; j<n/m; j++){
+                flag=false;
+                for(k=0; k<m*m; k++){
+                    if(ans_matrix[i*m+k/m][j*m+k%m]>0)  flag=true;
+                    temp[k] = ans_matrix[i*m+k/m][j*m+k%m];
+                }
+                if(flag){
+                    m_ans[{i, j}] = c++;
+                    compress_ans_matrix.push_back(temp);
+                }
+            }
+        }
+
+    	************************************code*********************************
+    	
+Makefile: 
+	g++ -c main.cpp -o main.o
+	g++ main.o library1.so -o a.out -Wl,-rpath=.
+	./a.out 
+    	
+    	
+######################################## SECOND ############################################    	
+
+Just added -O3 flag.
+Time: 40632 microseconds
+Speedup: .... times
+
+Makefile:
+	g++ -O3 -c main.cpp -o main.o
+	g++ main.o library1.so -o a.out -Wl,-rpath=.
+	./a.out 
+	
+	
+######################################## THIRD ############################################    		
+
+Time: 17028 microseconds
+
+	************************************code*********************************
+        int i, j, k, l, t, q, w, c=1, fi, si, fj, sj, xi, yi, xj, yj;
+        bool flag; vector<int> temp(m*m);
+
+    // #pragma omp parallel for private(i,j,k,l,t,q,w,temp,flag,c,fi,si,fj,sj,xi,yi,xj,yj) shared(rm_input, ans_matrix, in_matrix, compress_ans_matrix)   // ~36762 microseconds
+    #pragma omp parallel for schedule(static) num_threads(4) private(i,j,k,l,t,q,w,temp,flag,c,fi,si,fj,sj,xi,yi,xj,yj)    // ~17101 microseconds
+        for(i=1; i<=k_input; i++){
+            for(j=1; j<=k_input; j++){
+                fi = rm_input[i].first, si = rm_input[i].second;
+                fj = rm_input[j].first, sj = rm_input[j].second;
+                for(k=0; k<m*m; k++){
+                    for(l=0; l<m*m; l++){  //directly calculating compress ans matrix is also possible
+                        // cout<<fi<<" "<<si<<" "<<fj<<" "<<sj<<" m "<<m<<endl;
+                        // cout<<xi<<" "<<yi<<" "<<xj<<" "<<yj<<endl;
+                        // cout<<i<<" i "<<j<<" j "<<k<<" k "<<l<<" l\n";
+                        xi = fi*m + k/m, yi = si*m + k%m;
+                        xj = fj*m + l/m, yj = sj*m + l%m;
+                        t = Inner(in_matrix[i-1][k], in_matrix[j-1][l]);
+                        if(xj==yi) ans_matrix[xi][yj] = Outer(ans_matrix[xi][yj], t);
+                        if(xi==yj) ans_matrix[xj][yi] = Outer(ans_matrix[xj][yi], t);
+                        if(fi!=si){
+                            if(xi==yi) ans_matrix[yi][yj] = Outer(ans_matrix[yi][yj], t);
+                            if(yi==yj) ans_matrix[xj][xi] = Outer(ans_matrix[xj][xi], t);
+                        }
+                        if(fj!=sj){
+                            if(yj==yi) ans_matrix[xi][xj] = Outer(ans_matrix[xi][xj], t);
+                            if(xi==xj) ans_matrix[yj][yi] = Outer(ans_matrix[yj][yi], t);
+                        }
+                        if(fi!=si and fj!=sj){
+                            if(xi==yj) ans_matrix[yi][xj] = Outer(ans_matrix[yi][xj], t);
+                            if(xj==yi) ans_matrix[yj][xi] = Outer(ans_matrix[yj][xi], t);
+                        }
+                    }
+                }
+            }
+        }
+
+        for(i=0; i<n/m; i++){
+            for(j=i; j<n/m; j++){
+                flag=false;
+                for(k=0; k<m*m; k++){
+                    if(ans_matrix[i*m+k/m][j*m+k%m]>0)  flag=true;
+                    temp[k] = ans_matrix[i*m+k/m][j*m+k%m];
+                }
+                if(flag){
+                    m_ans[{i, j}] = c++;
+                    compress_ans_matrix.push_back(temp);
+                }
+            }
+        }
+	************************************code*********************************
+
+Makefile:
+	export OMP_NUM_THREADS=4
+	g++ -fopenmp -O2 -c main.cpp -o main.o
+	g++ -fopenmp main.o library1.so -o a.out -Wl,-rpath=.
+	./a.out 
+
+
+######################################## FOURTH ############################################    		
+
+
+
+      
