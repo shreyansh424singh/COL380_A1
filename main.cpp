@@ -112,18 +112,14 @@ void matrix_ope(){
                         xj = fj*m + l/m, yj = sj*m + l%m;
                         t = Inner(in_matrix[i-1][k], in_matrix[j-1][l]);
                         if(xj==yi) ans_matrix[xi][yj] = Outer(ans_matrix[xi][yj], t);
-                        if(xi==yj) ans_matrix[xj][yi] = Outer(ans_matrix[xj][yi], t);
                         if(fi!=si){
-                            if(xi==yi) ans_matrix[yi][yj] = Outer(ans_matrix[yi][yj], t);
-                            if(yi==yj) ans_matrix[xj][xi] = Outer(ans_matrix[xj][xi], t);
+                            if(xi==xj) ans_matrix[yi][yj] = Outer(ans_matrix[yi][yj], t);
                         }
                         if(fj!=sj){
                             if(yj==yi) ans_matrix[xi][xj] = Outer(ans_matrix[xi][xj], t);
-                            if(xi==xj) ans_matrix[yj][yi] = Outer(ans_matrix[yj][yi], t);
                         }
                         if(fi!=si and fj!=sj){
                             if(xi==yj) ans_matrix[yi][xj] = Outer(ans_matrix[yi][xj], t);
-                            if(xj==yi) ans_matrix[yj][xi] = Outer(ans_matrix[yj][xi], t);
                         }
                     }
                 }
@@ -182,6 +178,7 @@ int main() {
         // for (int j = 0; j < m * m; j++){
         //     out_file.read((char *)&out_matrix[i][j], sizeof(short)); // here short 2 bytes
         //     cout << out_matrix[i][j] << " ";
+        //     if(out_matrix[i][j] != compress_ans_matrix[m_ans[{iIndex, jIndex}]-1][j]) cout<<"NOT CORRECT #########################################################\n";
         // }
         // cout << endl;
     }
