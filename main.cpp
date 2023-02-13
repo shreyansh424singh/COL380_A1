@@ -70,7 +70,7 @@ void matrix(){
     auto start = std::chrono::high_resolution_clock::now();
 
     int i, j, k, l, p, t, w, c=1, numt=4, q=k_input, xi, xj, yi, yj;
-    bool flag; vector<int> temp(m*m);
+    bool flag; vector<int> temp(m*m, 0);
 
     for(i=0; i<q; i++){
         k = rm_input[i+1].first, l = rm_input[i+1].second;
@@ -93,24 +93,49 @@ void matrix(){
     cout<<k_input<<" DE\n";
 
     c=1;
-    for(i=1; i<=k_input; i++){
-        xi = rm_input[i].first, yi = rm_input[i].second;
-        for(j=1; j<=k_input; j++){
-            xj = rm_input[j].first, yj = rm_input[j].second;
-            if(yi != xj or xi > yj) continue;
-            for(k=0; k<m; k++){
-                for(l=0; l<m; l++){
-                    t = 0;
-                    for(p=0; p<m; p++)
-                        t = Outer(t, Inner(in_matrix[i-1][k*m+p], in_matrix[j-1][p*m+l]));
-                    temp[k*m+l] = t;
+    // #pragma omp parallel for private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
+    // #pragma omp parallel for schedule(static) num_threads(4) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
+    #pragma omp parallel num_threads(numt) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
+    {
+        int tid = omp_get_thread_num();
+        for(i=tid+1; i<=k_input; i+=numt){
+        // for(i=1; i<=k_input; i++){
+            xi = rm_input[i].first, yi = rm_input[i].second;
+            // cout<<"h1\n";
+            for(j=1; j<=k_input; j++){
+                xj = rm_input[j].first, yj = rm_input[j].second;
+                // cout<<"h2\n";
+                if(yi != xj or xi > yj) continue;
+                // cout<<"h25\n";
+                for(k=0; k<m; k++){
+                    for(l=0; l<m; l++){
+                        t = 0;
+                        // cout<<"h28\n";
+                        for(p=0; p<m; p++)
+                            t = Outer(t, Inner(in_matrix[i-1][k*m+p], in_matrix[j-1][p*m+l]));
+                        // cout<<"h3\n";
+                        // temp[k*m+l] = t;
+                        if(m_ans[{xi, yj}] == 0) m_ans[{xi, yj}] = c;
+                        #pragma omp critical
+                        {    
+                            compress_ans_matrix[m_ans[{xi, yj}]-1][k*m+l] = Outer(t, compress_ans_matrix[m_ans[{xi, yj}]-1][k*m+l]);
+                            c++;
+                        }
+                    }
                 }
+                // if(m_ans[{xi, yj}] == 0) m_ans[{xi, yj}] = c;
+                // cout<<"h4\n";
+                // for(k=0; k<m*m; k++){
+                    // temp[k] = Outer(compress_ans_matrix[m_ans[{xi, yj}]-1][k], temp[k]);
+                // }
+                // cout<<"h5\n";
+                // #pragma omp critical
+                // {
+                //     compress_ans_matrix[m_ans[{xi, yj}]-1] = temp;
+                //     c++;
+                // }
+                // cout<<"h6\n";
             }
-            if(m_ans[{xi, yj}] == 0) m_ans[{xi, yj}] = c++;
-            for(k=0; k<m*m; k++){
-                temp[k] = Outer(compress_ans_matrix[m_ans[{xi, yj}]-1][k], temp[k]);
-            }
-            compress_ans_matrix[m_ans[{xi, yj}]-1] = temp;
         }
     }
     cout<<compress_ans_matrix.size()<<" my k\n";
