@@ -149,18 +149,20 @@ void matrix(){
     cout<<k_input<<" DE\n";
 
     c=1;
-    // #pragma omp parallel for private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
+    #pragma omp parallel for private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
     // #pragma omp parallel for schedule(static) num_threads(4) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
-    #pragma omp parallel num_threads(numt) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
-    {
-        #pragma omp for
+    // #pragma omp parallel num_threads(numt) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
+    // {
+        // #pragma omp for
+        // int tid = omp_get_thread_num();
+        // for(i=tid+1; i<=k_input; i+=numt){
         for(i=1; i<=k_input; i++){
             xi = rm_input[i].first, yi = rm_input[i].second;
             for(j=1; j<=k_input; j++){
                 xj = rm_input[j].first, yj = rm_input[j].second;
                 if(yi != xj or xi > yj) continue;
-                #pragma omp task
-                {
+                // #pragma omp task
+                // {
                     for(k=0; k<m; k++){
                         for(l=0; l<m; l++){
                             t = 0;
@@ -173,11 +175,11 @@ void matrix(){
                                 c++;
                             }
                         }
-                    }
+                    // }
                 }
             }
         }
-    }
+    // }
 
     c=1;
     for(i=0; i<compress_ans_matrix.size(); i++){
@@ -209,7 +211,7 @@ int main(int argc, char *argv[]) {
 
     // write_file(output);
 
-    // compare();
+    compare();
 
     return 0;
 }
