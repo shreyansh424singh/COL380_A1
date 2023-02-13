@@ -29,7 +29,7 @@ void read_file(){
         file.read((char*)&iIndex, sizeof(iIndex));
         file.read((char*)&jIndex, sizeof(jIndex));
         m_input[{iIndex, jIndex}] = i+1;
-        // m_input[{jIndex, iIndex}] = i+1;
+        m_input[{jIndex, iIndex}] = i+1;
         rm_input[i+1] = {iIndex, jIndex};
         in_matrix[i].resize(m*m);
         // cout<<iIndex<<" i j "<<jIndex<<endl;
@@ -69,7 +69,7 @@ void matrix(){
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    int i, j, k, l, p, t, w, c=1, numt=4, q=k_input;
+    int i, j, k, l, p, t, w, c=1, numt=4, q=k_input, xi, xj, yi, yj;
     bool flag; vector<int> temp(m*m);
 
     for(i=0; i<q; i++){
@@ -78,68 +78,39 @@ void matrix(){
         for(j=0; j<m*m; j++) 
             temp[j] = in_matrix[i][m*(j%m)+j/m];
         in_matrix.push_back(temp);
-        m_input[{l, k}] = 1+k_input++;
+        k_input++;
+        m_input[{l, k}] = k_input;
+        rm_input[k_input] = {l, k};
     }
 
-    int size = k_input * k_input;
-    ans_matrix.resize(size);
-    for(int i=0; i<size; i++) ans_matrix[i].resize(m*m, 0);
+    int g = (n/m)*(n/m+1)/2;
+    compress_ans_matrix.resize(g);
+    for(int i=0; i<g; i++) compress_ans_matrix[i].resize(m*m, 0);
+    for(int i=0, c=1; i<n/m; i++)
+        for(int j=i; j<n/m; j++)
+            m_ans[{i, j}] = c++;
 
     cout<<k_input<<" DE\n";
 
+    c=1;
     for(i=1; i<=k_input; i++){
+        xi = rm_input[i].first, yi = rm_input[i].second;
         for(j=1; j<=k_input; j++){
+            xj = rm_input[j].first, yj = rm_input[j].second;
+            if(yi != xj or xi > yj) continue;
             for(k=0; k<m; k++){
                 for(l=0; l<m; l++){
                     t = 0;
-                    for(p=0; p<m; p++){
+                    for(p=0; p<m; p++)
                         t = Outer(t, Inner(in_matrix[i-1][k*m+p], in_matrix[j-1][p*m+l]));
-                    }
-                    // cout<<"...... ";
-                    ans_matrix[c-1][k*m+l] = t;
-                    // cout<<t<<" CR\n";
-                    // cout<<"%%%%%%\n";
+                    temp[k*m+l] = t;
                 }
             }
-            m_temp[{i, j}] = c++;
-        }
-    }
-
-    // cout<<c<<" HFGRGR\n";
-
-    // cout<<m_input[{0, 3}]<<"  "<<m_input[{3, 0}]<<" jbg "<<m_temp[{m_input[{0, 3}], m_input[{3, 0}]}]<<" "<<m_temp[{m_input[{3, 0}], m_input[{0, 3}]}]<<endl;
-    // int x1 = m_temp[{m_input[{0, 3}], m_input[{3, 0}]}], x2 = m_temp[{m_input[{3, 0}], m_input[{0, 3}]}];
-    // for(i=0; i<m*m; i++) cout<<in_matrix[m_input[{0, 3}]-1][i]<<" "; cout<<endl;
-    // for(i=0; i<m*m; i++) cout<<in_matrix[m_input[{3, 0}]-1][i]<<" "; cout<<endl;
-    // for(i=0; i<m*m; i++) cout<<ans_matrix[x1][i]<<" "; cout<<endl;
-    // for(i=0; i<m*m; i++) cout<<ans_matrix[x2][i]<<" "; cout<<endl;
-
-
-
-    c=1;
-    for(i=0; i<n/m; i++){
-        for(j=i; j<n/m; j++){
-            flag=false;
+            if(m_ans[{xi, yj}] == 0) m_ans[{xi, yj}] = c++;
             for(k=0; k<m*m; k++){
-                // if(ans_matrix[i*m+k/m][j*m+k%m]>0)  flag=true;
-                // temp[k] = ans_matrix[i*m+k/m][j*m+k%m];
-                t=0;
-                for(l=0; l<n/m; l++){
-                    if(m_input[{i, l}]>0 and m_input[{l, j}]>0){
-                        // cout<<i<<"  "<<j<<" "<<l<<" * "<<m_input[{i, l}]<<" "<<m_input[{l, j}]<<" t "<<m_temp[{m_input[{i, l}], m_input[{l, j}]}]<<" "<<ans_matrix[m_temp[{m_input[{i, l}], m_input[{l, j}]}]][k]<<endl;
-                        t = Outer(t, ans_matrix[m_temp[{m_input[{i, l}], m_input[{l, j}]}]-1][k]);
-                    }
-                }
-                if(t>0){
-                    temp[k]=t; flag=true;
-                }
+                temp[k] = Outer(compress_ans_matrix[m_ans[{xi, yj}]-1][k], temp[k]);
             }
-            if(flag){
-                // cout<<i<<" "<<j<<endl;
-                // for(auto &e:temp) cout<<e<<" "; cout<<endl;
-                m_ans[{i, j}] = c++;
-                compress_ans_matrix.push_back(temp);
-            }
+            compress_ans_matrix[m_ans[{xi, yj}]-1] = temp;
         }
     }
     cout<<compress_ans_matrix.size()<<" my k\n";
