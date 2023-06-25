@@ -2,6 +2,8 @@
        				      Shreyansh Singh
        				        2020CS10385
 
+(Note: The analysis is done on my local machine, while running on css most of my processes were killed and css stopped working many times) 
+
 Approach 1:
 
 Idea: 		Implemented a basic O(n^3) algorithm.
@@ -29,10 +31,11 @@ Drawback: 	The code is sequential, thus it takes time.
 
 Approach 4:
 
-Idea: 		Optimised the previous approach using OpenMP, omp parallel for is used which makes the outer loop run parallelly, in this method task assigned to threads is 
+Idea: 		Optimised the previous approach using OpenMP, omp parallel for is used which makes the outer loop run parallelly, in this method task assigned to threads is managed by OpenMP.
 Why attempted: 	This method runs the parallelly using multithreading, which reudces the time as compared to sequential execution.
 Time Taken: 	16 milliseconds
 Results: 	1.75 times speedup.
+Drawback:	Diving of tasks among threads is handled by OpenMP, thus not very efficient.
 
 Approach 5:
 

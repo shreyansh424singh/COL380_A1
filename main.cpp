@@ -1,6 +1,4 @@
 #include <bits/stdc++.h>
-// #include <iostream>
-// #include <fstream>
 #include "library.hpp"
 #include <omp.h>
 
@@ -13,92 +11,58 @@ vector<pair<int, int>> rm_input, rm_ans, rm_fans;
 vector<vector<int>> in_matrix, out_matrix, final_ans_matrix, compress_ans_matrix;
 int n, m, k_input, k_output;
 
-void read_file(string input){
+void read_f(string input){
     // string input = "input";
-    ifstream file(input, ios::binary);
+    ifstream f(input, ios::binary);
 
-    file.read((char*)&n, 4);
-    file.read((char*)&m, 4);
-    file.read((char*)&k_input, 4);
+    f.read((char*)&n, 4);
+    f.read((char*)&m, 4);
+    f.read((char*)&k_input, 4);
     in_matrix.resize(k_input);
     int size = (n/m)*(n/m);
     rm_input.resize(size);
     rm_ans.resize(size);
     rm_fans.resize(size);
-    cout<<n<<" n "<<m<<" m "<<k_input<<" k_input\n";
+    // cout<<n<<" n "<<m<<" m "<<k_input<<" k_input\n";
     for (int i = 0; i < k_input; i++) {
-        int iIndex, jIndex;
-        file.read((char*)&iIndex, 4);
-        file.read((char*)&jIndex, 4);
-        m_input[{iIndex, jIndex}] = i+1;
-        m_input[{jIndex, iIndex}] = i+1;
-        rm_input[i+1] = {iIndex, jIndex};
+        int id, jd;
+        f.read((char*)&id, 4);
+        f.read((char*)&jd, 4);
+        m_input[{id, jd}] = i+1;
+        m_input[{jd, id}] = i+1;
+        rm_input[i+1] = {id, jd};
         in_matrix[i].resize(m*m);
         for (int j = 0; j < m * m; j++) {
-            file.read((char*)&in_matrix[i][j], sizeof(char));
+            f.read((char*)&in_matrix[i][j], sizeof(char));
         }
     }
-    file.close();
+    f.close();
 }
 
-void write_file(string output){
+void write_f(string output){
     // string output = "output";
-    ofstream ofile(output, ios::binary);
+    ofstream of(output, ios::binary);
 
-    ofile.write((char*)&n, sizeof(n));
-    ofile.write((char*)&m, sizeof(m));
+    of.write((char*)&n, sizeof(n));
+    of.write((char*)&m, sizeof(m));
     int kout = final_ans_matrix.size();
-    ofile.write((char*)&kout, sizeof(kout));
-
-    // cout << n << " n " << m << " m " << kout << " k output " <<compress_ans_matrix.size()<<" my k\n";
+    of.write((char*)&kout, sizeof(kout));
 
     for (int i = 0; i < kout; i++) {
-        int iIndex, jIndex;
-        iIndex = rm_fans[i + 1].first;
-        jIndex = rm_fans[i + 1].second;
-        // cout << iIndex << " i j " << jIndex << endl;
-        ofile.write((char*)&iIndex, sizeof(iIndex));
-        ofile.write((char*)&jIndex, sizeof(jIndex));
+        int id, jd;
+        id = rm_fans[i + 1].first;
+        jd = rm_fans[i + 1].second;
+        // cout << id << " i j " << jd << endl;
+        of.write((char*)&id, sizeof(id));
+        of.write((char*)&jd, sizeof(jd));
         for (int j = 0; j < m * m; j++) {
             uint16_t value = (uint16_t)final_ans_matrix[i][j];
             // cout<<value<<" ";
-            ofile.write((char*)&value, sizeof(value));
+            of.write((char*)&value, sizeof(value));
         }
         // cout<<endl;
     }
-    ofile.close();
-}
-
-void compare(){
-    ifstream out_file("output111", ios::binary);
-    out_file.read((char *)&n, sizeof(n));
-    out_file.read((char *)&m, sizeof(m));
-    out_file.read((char *)&k_output, sizeof(k_output));
-    out_matrix.resize(k_output);
-    cout << n << " n " << m << " m " << k_output << " k output " <<compress_ans_matrix.size()<<" my k\n";
-    for (int i = 0; i < k_output; i++){
-
-        if(i>= compress_ans_matrix.size()){ cout<<"k not matching\n"; break;}
-        
-        int iIndex, jIndex;
-        out_file.read((char *)&iIndex, sizeof(iIndex));
-        out_file.read((char *)&jIndex, sizeof(jIndex));
-        m_output[{iIndex, jIndex}] = i + 1;
-        out_matrix[i].resize(m * m);
-
-        // cout << iIndex << " i j " << jIndex<<" "<< m_ans[{iIndex, jIndex}] << endl;
-        // for (int j = 0; j < m * m; j++){
-        //     cout<<final_ans_matrix[m_ans[{iIndex, jIndex}]-1][j]<<" ";
-        // } cout<<endl;
-        for (int j = 0; j < m * m; j++){
-            out_file.read((char *)&out_matrix[i][j], sizeof(short)); // here short 2 bytes
-            // cout << out_matrix[i][j] << " ";
-            if(out_matrix[i][j] != final_ans_matrix[m_ans[{iIndex, jIndex}]-1][j]) cout<<"NOT CORRECT #########################################################\n";
-        }
-        // cout << endl;
-    }
-    out_file.close();
-
+    of.close();
 }
 
 void matrix(){
@@ -120,15 +84,10 @@ void matrix(){
         m_input[{l, k}] = k_input;
         rm_input[k_input] = {l, k};
     }
-// real code
-    // int g = (n/m)*(n/m+1)/2;
-    // compress_ans_matrix.resize(g);
-    // for(int i=0; i<g; i++) compress_ans_matrix[i].resize(m*m, 0);
 
-//trying to parallelise it
     int g = (n/m)*(n/m+1)/2;
     compress_ans_matrix.resize(g);
-    #pragma omp parallel num_threads(4)
+    #pragma omp parallel num_threads(numt)
     {
         #pragma omp single
         {
@@ -146,23 +105,18 @@ void matrix(){
                 m_ans[{i, j}] = c++;
             }
 
-    cout<<k_input<<" DE\n";
 
     c=1;
-    #pragma omp parallel for private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
-    // #pragma omp parallel for schedule(static) num_threads(4) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
-    // #pragma omp parallel num_threads(numt) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
-    // {
-        // #pragma omp for
-        // int tid = omp_get_thread_num();
-        // for(i=tid+1; i<=k_input; i+=numt){
+    #pragma omp parallel num_threads(numt) private(i,j,k,l,t,p,temp,xi,yi,xj,yj) shared(c, compress_ans_matrix, m_ans)
+    {
+        #pragma omp for
         for(i=1; i<=k_input; i++){
             xi = rm_input[i].first, yi = rm_input[i].second;
             for(j=1; j<=k_input; j++){
                 xj = rm_input[j].first, yj = rm_input[j].second;
                 if(yi != xj or xi > yj) continue;
-                // #pragma omp task
-                // {
+                #pragma omp task
+                {
                     for(k=0; k<m; k++){
                         for(l=0; l<m; l++){
                             t = 0;
@@ -175,11 +129,11 @@ void matrix(){
                                 c++;
                             }
                         }
-                    // }
+                    }
                 }
             }
         }
-    // }
+    }
 
     c=1;
     for(i=0; i<compress_ans_matrix.size(); i++){
@@ -192,7 +146,6 @@ void matrix(){
         }
     }
 
-    cout<<compress_ans_matrix.size()<<" my k\n";
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -204,14 +157,11 @@ int main(int argc, char *argv[]) {
     string input = argv[1];
     string output = argv[2];
 
-    read_file(input);
+    read_f(input);
 
-    // matrix_ope();
     matrix();
 
-    // write_file(output);
-
-    compare();
+    write_f(output);
 
     return 0;
 }
